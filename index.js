@@ -26,6 +26,7 @@ module.exports = {
         s3Client: function(context) {
           return context.s3Client; // if you want to provide your own S3 client to be used instead of one from aws-sdk
         },
+        cacheControl: 'max-age=0, public',
         allowOverwrite: false
       },
       requiredConfig: ['bucket', 'region'],
@@ -38,7 +39,9 @@ module.exports = {
         var distDir        = this.readConfig('distDir');
         var filePattern    = this.readConfig('filePattern');
         var allowOverwrite = this.readConfig('allowOverwrite');
-        var filePath    = path.join(distDir, filePattern);
+        var cacheControl   = this.readConfig('cacheControl');
+        var metadata       = this.readConfig('metadata');
+        var filePath       = path.join(distDir, filePattern);
 
         var options = {
           bucket: bucket,
@@ -47,7 +50,9 @@ module.exports = {
           filePattern: filePattern,
           filePath: filePath,
           revisionKey: revisionKey,
-          allowOverwrite: allowOverwrite
+          allowOverwrite: allowOverwrite,
+          cacheControl: cacheControl,
+          metadata: metadata
         };
 
         this.log('preparing to upload revision to S3 bucket `' + bucket + '`', { verbose: true });
