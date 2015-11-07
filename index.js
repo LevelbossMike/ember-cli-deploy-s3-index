@@ -11,6 +11,7 @@ module.exports = {
   createDeployPlugin: function(options) {
     var DeployPlugin = DeployPluginBase.extend({
       name: options.name,
+      S3: options.S3 || S3,
 
       defaultConfig: {
         filePattern: 'index.html',
@@ -26,7 +27,7 @@ module.exports = {
         s3Client: function(context) {
           return context.s3Client; // if you want to provide your own S3 client to be used instead of one from aws-sdk
         },
-        cacheControl: 'max-age=0, public',
+        cacheControl: 'max-age=0, no-cache',
         allowOverwrite: false
       },
       requiredConfig: ['bucket', 'region'],
@@ -57,7 +58,7 @@ module.exports = {
 
         this.log('preparing to upload revision to S3 bucket `' + bucket + '`', { verbose: true });
 
-        var s3 = new S3({ plugin: this });
+        var s3 = new this.S3({ plugin: this });
         return s3.upload(options);
       },
 
@@ -78,8 +79,15 @@ module.exports = {
 
         this.log('preparing to activate `' + revisionKey + '`', { verbose: true });
 
-        var s3 = new S3({ plugin: this });
+        var s3 = new this.S3({ plugin: this });
         return s3.activate(options);
+      },
+
+      didActivate: function(context) {
+        var didActivate = this.readConfig('didActivate') || function() {};
+
+        return Promise.resolve()
+          .then(didActivate)
       },
 
       fetchRevisions: function(context) {
@@ -93,7 +101,7 @@ module.exports = {
           filePattern: filePattern,
         };
 
-        var s3 = new S3({ plugin: this });
+        var s3 = new this.S3({ plugin: this });
         return s3.fetchRevisions(options)
           .then(function(revisions) {
             context.revisions = revisions;
